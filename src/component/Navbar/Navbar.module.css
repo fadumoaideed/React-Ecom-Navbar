@@ -1,0 +1,43 @@
+/* Navbar */
+* {
+  font-family: Helvetica, Arial, sans-serif;
+}
+nav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-family: Helvetica, Arial, sans-serif;
+  padding-top: 16px;
+  padding-left: 8px;
+  padding-right: 8px;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.logoNavMenu {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+
+/* SVGs */
+.desktopLogo {
+  display: none;
+  height: 60px;
+  padding-right: 10px;
+}
+
+.mobileLogo {
+  padding-right: 10px;
+  height: 50px;
+  width: 50px;
+}
+
+@media (min-width: 480px) {
+  .desktopLogo {
+    display: block;
+  }
+  .mobileLogo {
+    display: none;
+  }
+}

@@ -1,0 +1,19 @@
+.dropdown {
+  display: flex;
+  flex-direction: row;
+  background-color: #333;
+  color: white;
+  column-gap: 25px;
+  padding: 10px;
+  font-weight: 600;
+  flex: 2;
+}
+.items {
+  padding-bottom: 5px;
+}
+.sections {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+/* FIXME: flex wrap, full width */
