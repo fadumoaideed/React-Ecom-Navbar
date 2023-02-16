@@ -1,8 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dropdown from "../Dropdown/Dropdown";
 import styles from "./NavMenu.module.css";
+
 function NavMenu() {
   const [isDropdownVisible, setDropdownVisibility] = useState(false);
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (name === "Dana") {
+      document.body.style.backgroundColor = "purple";
+    }
+  }, [name]);
+
+  function Login() {
+    const response = prompt("Please enter your name: ") || "";
+    setName(response);
+  }
 
   return (
     <div className={styles.menuDrop}>
@@ -37,9 +50,12 @@ function NavMenu() {
         <div className={styles.subscribeLogin}>
           <button className={styles.subscribe}>Subscribe</button>
           <a
-            className={styles.login}
-            href="https://myaccount.economist.com/s/login/?ec=302&inst=3z&startURL=%2Fsetup%2Fsecur%2FRemoteAccessAuthorizationPage.apexp%3Fsource%3DCAAAAYSRijySMDAwMDAwMDAwMDAwMDAwAAAA8HWtQ1aI3ClKnnUAYNZ09FhFqmTlDv-dehkiweDg6OIns2qiYLgsSj0dJGYzyYQQrjo1sno_pz9-WwOm9rSUy6hq1q_E14b1gw8CeqkdAtVSeWo7HdRsoHhCcO1RYcd9l73KWMBpVK_ASnjwTuClLRrJ6HX_Mgd6Lzs1VDNZaMeJ7JMCW91Vhutdq5nJEOyisFkOzFzDec34DecUm2HXHODQt3F6CxYyIYZB7TrowQm0ebQALWlHd9Hu2rJli0HRSLc0GPQosToBilSVxz-D3Ch5dHsVal_RGkmfIC9OgvDPmwFbaXUegW4j6bTyZo6Paeeqc3ei5utnB3_rwsT6rtYiTZFOwZpaJ1WqLMbq1LezKZ1cvO6rS6SnI1LHXFFf4n1b1StQvG3dgUepn5jPBmBKzDPVdpnCTbDmHliEg-c83etuzMEfyeT0MBKgVW0Oe0riXJZ89kVSB_P2GGRF2gCRsnBSk4PdgWMXBeMZIYn_mBJTUnxrZylzt0-XsfFjn_E9YCTSdobI_QG5K5C5obF0qtlwoN-qtD2gJwcSHqhNdMZ4p5n7yQElwVqYRTUfpQOjxCFShziH1xrtYdVUzBvdqQ7C3eAT2M8ln_Uu8OTmENnFToGsv8XRstfhVtvKpOaTwG0C2VB3oN8ZJ0cOiKqDcL1m37TyxE8OW4n6KArXYcm-I7pMwF23NexqUsvUszflvv_3xf684VlqLjJF8u8%253D">
-            Login
+            href="#"
+            onClick={() => {
+              Login();
+            }}
+            className={styles.login}>
+            {name ? name : "Login"}
           </a>
         </div>
       </div>
