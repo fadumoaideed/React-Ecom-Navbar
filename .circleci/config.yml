@@ -1,0 +1,102 @@
+version: 2.1
+
+orbs:
+  slack: circleci/slack@2.2.0
+
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/node:14
+
+jobs:
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+      # Restore dependencies from the cache.
+          keys:
+          # Only install dependencies when the checksum of the package.json changes.
+          - v1-dependencies-{{ checksum "package.json" }}
+          # Fallback to using the latest cache if no exact match is found.
+          - v1-dependencies-
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Run build
+          command: npm run build
+      - run:
+          name: Test saving file
+          command: echo "Hello, World" >> output.txt  
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - persist_to_workspace:
+          # Persist the previous steps to the workspace.
+          root: ~/repo
+          paths: .
+
+  create-and-copy-v5-v6-branches:
+    <<: *defaults
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "b8:63:31:22:c6:1d:1c:94:5d:18:43:20:47:cc:86:72"
+      - run:
+          name: "Copy changes to a v5 and v6 branch"
+          command: |
+            echo $CIRCLE_BRANCH
+            # Store the name of the current branch
+            CURRENT_BRANCH=${CIRCLE_BRANCH}
+
+            echo "Function to create or checkout a branch"
+            create_or_checkout_branch() {
+                # First param is BRANCH_NAME
+                BRANCH_NAME=$1
+                # Check if the branch exists
+                if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
+                    # Checkout if it exists
+                    echo "Branch $BRANCH_NAME already exists, checking out to $BRANCH_NAME."
+                    git checkout $BRANCH_NAME
+                else
+                    # Create and push if it doesn't exist
+                    echo "Creating new branch $BRANCH_NAME."
+                    git checkout -b $BRANCH_NAME
+                    git push origin $BRANCH_NAME
+                fi
+            }     
+
+            echo "Create and push -v5 branch"
+            create_or_checkout_branch "${CURRENT_BRANCH}-v5"
+
+            echo "Create and push -v6 branch"
+            create_or_checkout_branch "${CURRENT_BRANCH}-v6"
+
+
+
+workflows:
+  version: 2
+  test-deploy:
+    jobs:
+      - test:
+      # Run the test job on all branches and tags.
+          filters:
+            tags:
+              only: /^v.*/
+      - create-and-copy-v5-v6-branches:
+          filters:
+            branches:
+              only:
+                - /^WEBG.*/
+                - /^webg.*/
+              ignore:
+                - master
+                - main
+                - gh-page
+                - next
+                - /.*dependabot.*/
+                - /.*v5.*/
+                - /.*v6.*/
