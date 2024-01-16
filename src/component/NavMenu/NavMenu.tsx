@@ -1,19 +1,20 @@
-import { useState, useEffect } from "react";
-import Dropdown from "../Dropdown/Dropdown";
-import styles from "./NavMenu.module.css";
+/* eslint-disable jsx-a11y/anchor-is-valid */
+import { useState, useEffect } from 'react';
+import Dropdown from '../Dropdown/Dropdown';
+import styles from './NavMenu.module.css';
 
 function NavMenu() {
   const [isDropdownVisible, setDropdownVisibility] = useState(false);
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
 
   useEffect(() => {
-    if (name === "Dana") {
-      document.body.style.backgroundColor = "purple";
+    if (name === 'Dana') {
+      document.body.style.backgroundColor = 'purple';
     }
   }, [name]);
 
   function Login() {
-    const response = prompt("Please enter your name: ") || "";
+    const response = prompt('Please enter your name: ') || '';
     setName(response);
   }
 
@@ -28,14 +29,16 @@ function NavMenu() {
               xmlns="http://www.w3.org/2000/svg"
               onClick={() => {
                 setDropdownVisibility(!isDropdownVisible);
-              }}>
+              }}
+            >
               <g fill="none" fill-rule="evenodd">
                 <path d="M0 0h24v24H0z"></path>
                 <path
                   className="path-foreground"
                   d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
                   fill="#0D0D0D"
-                  fill-rule="nonzero"></path>
+                  fill-rule="nonzero"
+                ></path>
               </g>
             </svg>
             <a href="www.example.com"> Menu</a>
@@ -54,8 +57,9 @@ function NavMenu() {
             onClick={() => {
               Login();
             }}
-            className={styles.login}>
-            {name ? name : "Login"}
+            className={styles.login}
+          >
+            {name ? name : 'Login'}
           </a>
         </div>
       </div>
