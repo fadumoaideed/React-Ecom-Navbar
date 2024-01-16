@@ -46,11 +46,14 @@ jobs:
           fingerprints:
             - "40:4a:18:c2:b1:af:16:a8:27:54:65:ba:89:38:13:33"
       - run:
-          name: "Copy changes to a v5 and v6 branch"
+          name: "Create v5 and v6 branch"
           command: |
             echo $CIRCLE_BRANCH
             # Store the name of the current branch
             CURRENT_BRANCH=${CIRCLE_BRANCH}
+
+            git log main..$CIRCLE_BRANCH --pretty=format:"%H" >> shas.txt
+            echo "Added all commits from ${CURRENT_BRANCH} into file sha.txt"
 
             echo "Function to create or checkout a branch"
             create_or_checkout_branch() {
@@ -59,30 +62,51 @@ jobs:
                 # Check if the branch exists
                 if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
                     # Checkout if it exists
-                    echo "Branch $BRANCH_NAME already exists, checking out to $BRANCH_NAME."
+                    echo "Branch $BRANCH_NAME already exists, checking out to $CURRENT_BRANCH."
                     git checkout $CURRENT_BRANCH
+                    echo "You are currently on the branch"
+                    git branch | grep -o "* .*"
                 else
-                    # Create and push if it doesn't exist
+                    # Create and push branch if it doesn't exist
                     echo "Creating new branch $BRANCH_NAME."
                     git checkout -b $BRANCH_NAME
+
+                    echo "You are currently on the branch"
+                    git branch | grep -o "* .*"
+
                     git push origin $BRANCH_NAME
-                    git checkout CURRENT_BRANCH
+                    echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
+
+                    git checkout $CURRENT_BRANCH
+                    echo "You are currently on the branch"
+                    git branch | grep -o "* .*"
                 fi
             }     
 
             echo "Create and push -v5 branch"
+            echo "Checkout to v5 branch"
+            git checkout v5
+            echo "You are currently on the branch"
+            git branch | grep -o "* .*"
             create_or_checkout_branch "${CURRENT_BRANCH}-v5"
 
             echo "Create and push -v6 branch"
-            create_or_checkout_branch "${CURRENT_BRANCH}-v6"
+            echo "Checkout to v6 branch"
+            git checkout v6
+            echo "You are currently on the branch"
+            git branch | grep -o "* .*"
+            create_or_checkout_branch "${CURRENT_BRANCH}-v6"     
       - persist_to_workspace:
           # Persist the previous steps to the workspace.
           root: ~/repo
           paths: .
 
-  create-and-copy-v5-v6-branches:
+  copy-to-v5-branch:
     <<: *defaults
     steps:
+      - attach_workspace:
+        # Attach to the created workspace.
+          at: ~/repo
       - checkout
       - add_ssh_keys:
           fingerprints:
@@ -90,37 +114,16 @@ jobs:
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
-            echo $CIRCLE_BRANCH
-            # Store the name of the current branch
-            CURRENT_BRANCH=${CIRCLE_BRANCH}
+            # Path to the file containing the list of SHAs
+            SHA_FILE=$(<sha.txt)
+            echo $SHA_FILE
 
-            echo "Function to create or checkout a branch"
-            create_or_checkout_branch() {
-                # First param is BRANCH_NAME
-                BRANCH_NAME=$1
-                # Check if the branch exists
-                if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
-                    # Checkout if it exists
-                    echo "Branch $BRANCH_NAME already exists, checking out to $BRANCH_NAME."
-                    git checkout $CURRENT_BRANCH
-                else
-                    # Create and push if it doesn't exist
-                    echo "Creating new branch $BRANCH_NAME."
-                    git checkout -b $BRANCH_NAME
-                    git push origin $BRANCH_NAME
-                    git checkout CURRENT_BRANCH
-                fi
-            }     
+            # Check if the SHA file exists
+            if [ ! -f "$SHA_FILE" ]; then
+                echo "File not found: $SHA_FILE"
+                exit 1
+            fi
 
-            echo "Create and push -v5 branch"
-            create_or_checkout_branch "${CURRENT_BRANCH}-v5"
-
-            echo "Create and push -v6 branch"
-            create_or_checkout_branch "${CURRENT_BRANCH}-v6"
-      - persist_to_workspace:
-          # Persist the previous steps to the workspace.
-          root: ~/repo
-          paths: .
 
 workflows:
   version: 2
@@ -131,14 +134,13 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - create-and-copy-v5-v6-branches:
+      - create-v5-v6-branch:
           requires:
             - test
           filters:
             branches:
               only:
-                - /^WEBG.*/
-                - /^webg.*/
+                - /^(WEBG|webg).*?(?<!-v5|-v6)$/
               ignore:
                 - master
                 - main
@@ -149,3 +151,22 @@ workflows:
                 - /.*v6.*/
                 - /.*-v5$/
                 - /.*-v6$/
+                - /.*-(v5|v6)$/
+      - copy-to-v5-branch:
+          requires:
+            - create-v5-v6-branch
+          filters:
+            branches:
+              only:
+                - /^(WEBG|webg).*?(?<!-v5|-v6)$/
+              ignore:
+                - master
+                - main
+                - gh-page
+                - next
+                - /.*dependabot.*/
+                - /.*v5.*/
+                - /.*v6.*/
+                - /.*-v5$/
+                - /.*-v6$/
+                - /.*-(v5|v6)$/
