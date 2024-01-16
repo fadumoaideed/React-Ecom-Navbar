@@ -44,7 +44,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "b8:63:31:22:c6:1d:1c:94:5d:18:43:20:47:cc:86:72"
+            - "6d:40:aa:99:c1:09:30:f8:21:51:26:97:e3:ae:fc:3e"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
