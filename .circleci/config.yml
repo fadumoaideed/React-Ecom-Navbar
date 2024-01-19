@@ -26,9 +26,6 @@ jobs:
       - run:
           name: Run build
           command: npm run build
-      - run:
-          name: Test saving file
-          command: echo "Hello, World" >> output.txt  
       - save_cache:
           paths:
             - node_modules
@@ -44,7 +41,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "40:4a:18:c2:b1:af:16:a8:27:54:65:ba:89:38:13:33"
+            - "13:ad:33:5c:fe:27:07:c0:1c:5d:84:21:bc:b8:54:a6"
       - run:
           name: "Create v5 and v6 branch"
           command: |
@@ -52,9 +49,8 @@ jobs:
             # Store the name of the current branch
             CURRENT_BRANCH=${CIRCLE_BRANCH}
 
-            git log main..$CIRCLE_BRANCH --pretty=format:"%H" >> shas.txt
-            echo "Added all commits from ${CURRENT_BRANCH} into file sha.txt"
-
+            echo "CURRENT_BRANCH=${CIRCLE_BRANCH}" > current_branch.txt
+            
             echo "Function to create or checkout a branch"
             create_or_checkout_branch() {
                 # First param is BRANCH_NAME
@@ -64,42 +60,32 @@ jobs:
                     # Checkout if it exists
                     echo "Branch $BRANCH_NAME already exists, checking out to $CURRENT_BRANCH."
                     git checkout $CURRENT_BRANCH
-                    echo "You are currently on the branch"
-                    git branch | grep -o "* .*"
                 else
                     # Create and push branch if it doesn't exist
                     echo "Creating new branch $BRANCH_NAME."
                     git checkout -b $BRANCH_NAME
 
-                    echo "You are currently on the branch"
-                    git branch | grep -o "* .*"
-
                     git push origin $BRANCH_NAME
                     echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
 
                     git checkout $CURRENT_BRANCH
-                    echo "You are currently on the branch"
-                    git branch | grep -o "* .*"
                 fi
             }     
 
             echo "Create and push -v5 branch"
             echo "Checkout to v5 branch"
             git checkout v5
-            echo "You are currently on the branch"
-            git branch | grep -o "* .*"
             create_or_checkout_branch "${CURRENT_BRANCH}-v5"
 
             echo "Create and push -v6 branch"
             echo "Checkout to v6 branch"
             git checkout v6
-            echo "You are currently on the branch"
-            git branch | grep -o "* .*"
             create_or_checkout_branch "${CURRENT_BRANCH}-v6"     
       - persist_to_workspace:
           # Persist the previous steps to the workspace.
           root: ~/repo
-          paths: .
+          paths: 
+            - current_branch.txt  # Persist the file with the CURRENT_BRANCH variable
 
   copy-to-v5-branch:
     <<: *defaults
@@ -110,19 +96,50 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "40:4a:18:c2:b1:af:16:a8:27:54:65:ba:89:38:13:33"
+            - "13:ad:33:5c:fe:27:07:c0:1c:5d:84:21:bc:b8:54:a6"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
-            # Path to the file containing the list of SHAs
-            SHA_FILE=$(<sha.txt)
-            echo $SHA_FILE
+            # Make Current branch var availble in this job
+            source current_branch.txt
+            echo $CURRENT_BRANCH
+            git checkout $CURRENT_BRANCH
 
-            # Check if the SHA file exists
-            if [ ! -f "$SHA_FILE" ]; then
-                echo "File not found: $SHA_FILE"
-                exit 1
+            # Path to the file containing the list of SHAs
+            git log main..$CURRENT_BRANCH --pretty=format:"%H" > shas.txt
+            echo "Added all commits from ${CURRENT_BRANCH} into file sha.txt"
+            SHAS_FILE=shas.txt
+
+            V5_BRANCH="${CURRENT_BRANCH}-v5" 
+            echo $V5_BRANCH
+
+            git checkout $V5_BRANCH
+
+            echo "You are currently on the branch"
+            git branch | grep -o "* .*"
+
+            # Check if the file is empty
+            if [ ! -s "${SHAS_FILE}" ]; then
+                echo "File is empty"
+            else
+                echo "File is not empty: $(<shas.txt)"
             fi
+            
+            exit 1
+
+            # Iterate through each gith shar in the file
+            while IFS= read -r sha
+            do
+                echo "Applying cherry-pick for SHA: $sha"
+                git cherry-pick "$sha"
+                if [ $? -ne 0 ]; then
+                    echo "Error during cherry-picking commit $sha. Aborting cherry-pick."
+                    git cherry-pick --abort
+                    exit 1
+                fi
+            done < "$(<shas.txt)"
+
+            echo "All SHAs have been cherry-picked successfully."
 
 
 workflows:
