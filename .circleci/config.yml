@@ -41,7 +41,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "13:ad:33:5c:fe:27:07:c0:1c:5d:84:21:bc:b8:54:a6"
+            - "SHA256:zvnLkEEwEXtFhURIUaOfuiwK71PxzXr79w9CIogoEew"
       - run:
           name: "Create v5 and v6 branch"
           command: |
@@ -96,7 +96,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "13:ad:33:5c:fe:27:07:c0:1c:5d:84:21:bc:b8:54:a6"
+            - "SHA256:zvnLkEEwEXtFhURIUaOfuiwK71PxzXr79w9CIogoEew"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
@@ -113,6 +113,9 @@ jobs:
             V5_BRANCH="${CURRENT_BRANCH}-v5" 
             echo $V5_BRANCH
 
+            echo "You are currently on the branch"
+            git branch | grep -o "* .*"
+
             git checkout $V5_BRANCH
 
             echo "You are currently on the branch"
@@ -125,8 +128,6 @@ jobs:
                 echo "File is not empty: $(<shas.txt)"
             fi
             
-            exit 1
-
             # Iterate through each gith shar in the file
             while IFS= read -r sha
             do
@@ -137,7 +138,7 @@ jobs:
                     git cherry-pick --abort
                     exit 1
                 fi
-            done < "$(<shas.txt)"
+            done < "$SHAS_FILE"
 
             echo "All SHAs have been cherry-picked successfully."
 
@@ -157,33 +158,11 @@ workflows:
           filters:
             branches:
               only:
-                - /^(WEBG|webg).*?(?<!-v5|-v6)$/
-              ignore:
-                - master
-                - main
-                - gh-page
-                - next
-                - /.*dependabot.*/
-                - /.*v5.*/
-                - /.*v6.*/
-                - /.*-v5$/
-                - /.*-v6$/
-                - /.*-(v5|v6)$/
+                - /^(webg|WEBG)(?!.*-v\d+$).*/
       - copy-to-v5-branch:
           requires:
             - create-v5-v6-branch
           filters:
             branches:
               only:
-                - /^(WEBG|webg).*?(?<!-v5|-v6)$/
-              ignore:
-                - master
-                - main
-                - gh-page
-                - next
-                - /.*dependabot.*/
-                - /.*v5.*/
-                - /.*v6.*/
-                - /.*-v5$/
-                - /.*-v6$/
-                - /.*-(v5|v6)$/
+                - /^(webg|WEBG)(?!.*-v\d+$).*/
