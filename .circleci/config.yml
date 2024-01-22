@@ -41,7 +41,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:B3pufktUFFVkUnxnx5wqz8AXCcFJnxQLBbSoEfuWWPg"
+            - "SHA256:Rvc/zvNRv7oKVQywTn4PaWbEexulxLjL4RJZMcJiltY"
       - run:
           name: "Create v5 and v6 branch"
           command: |
@@ -98,7 +98,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:B3pufktUFFVkUnxnx5wqz8AXCcFJnxQLBbSoEfuWWPg"
+            - "SHA256:Rvc/zvNRv7oKVQywTn4PaWbEexulxLjL4RJZMcJiltY"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
