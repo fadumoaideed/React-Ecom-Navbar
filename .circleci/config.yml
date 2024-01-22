@@ -41,7 +41,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:DF0WDV5lo6FPTV1q1eJsGNnLYli9wYKjpKTzbfKBj00"
+            - "SHA256:B3pufktUFFVkUnxnx5wqz8AXCcFJnxQLBbSoEfuWWPg"
       - run:
           name: "Create v5 and v6 branch"
           command: |
@@ -66,6 +66,9 @@ jobs:
                 # Branch does not exist, create and checkout
                 git checkout -b $BRANCH_NAME
                 echo "Branch $BRANCH_NAME created and checked out."
+                git push origin $BRANCH_NAME
+                echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
+
             fi
             }
 
@@ -95,7 +98,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:DF0WDV5lo6FPTV1q1eJsGNnLYli9wYKjpKTzbfKBj00"
+            - "SHA256:B3pufktUFFVkUnxnx5wqz8AXCcFJnxQLBbSoEfuWWPg"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
