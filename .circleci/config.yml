@@ -130,7 +130,7 @@ jobs:
             else
                 echo "File is not empty: $(<shas.txt)"
             fi
-            exit 1
+
             # Iterate through each gith shar in the file
             while IFS= read -r sha
             do
