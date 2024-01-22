@@ -41,41 +41,40 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:fqSgF0C0JBNr2rRGF0x9SvmYYzSJW/QbuJqx8ExeInw"
+            - "SHA256:DF0WDV5lo6FPTV1q1eJsGNnLYli9wYKjpKTzbfKBj00"
       - run:
           name: "Create v5 and v6 branch"
           command: |
             echo $CIRCLE_BRANCH
+            
             # Store the name of the current branch
             CURRENT_BRANCH=${CIRCLE_BRANCH}
 
+            # Save current branch to be used in next job
             echo "CURRENT_BRANCH=${CIRCLE_BRANCH}" > current_branch.txt
             
             echo "Function to create or checkout a branch"
-            create_or_checkout_branch() {
-                # First param is BRANCH_NAME
-                BRANCH_NAME=$1
-                # Check if the branch exists
-                if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
-                    # Checkout if it exists
-                    echo "Branch $BRANCH_NAME already exists, checking out to $CURRENT_BRANCH."
-                    git checkout $CURRENT_BRANCH
-                else
-                    # Create and push branch if it doesn't exist
-                    echo "Creating new branch $BRANCH_NAME."
-                    git checkout -b $BRANCH_NAME
 
-                    git push origin $BRANCH_NAME
-                    echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
+            function create_or_checkout_branch {
+            local BRANCH_NAME=$1
 
-                    git checkout $CURRENT_BRANCH
-                fi
-            }     
+            # Check if the branch already exists using git branch and grep
+            if git branch --list $BRANCH_NAME | grep -q $BRANCH_NAME; then
+                # Branch exists
+                echo "Branch $BRANCH_NAME already exists, checking out to $CURRENT_BRANCH."
+            else
+                # Branch does not exist, create and checkout
+                git checkout -b $BRANCH_NAME
+                echo "Branch $BRANCH_NAME created and checked out."
+            fi
+            }
 
             echo "Create and push -v5 branch"
             echo "Checkout to v5 branch"
             git checkout v5
             create_or_checkout_branch "${CURRENT_BRANCH}-v5"
+
+            git checkout $CURRENT_BRANCH
 
             echo "Create and push -v6 branch"
             echo "Checkout to v6 branch"
@@ -96,16 +95,17 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:fqSgF0C0JBNr2rRGF0x9SvmYYzSJW/QbuJqx8ExeInw"
+            - "SHA256:DF0WDV5lo6FPTV1q1eJsGNnLYli9wYKjpKTzbfKBj00"
       - run:
           name: "Copy changes to a v5 and v6 branch"
           command: |
             # Make Current branch var availble in this job
             source current_branch.txt
+
             echo $CURRENT_BRANCH
             git checkout $CURRENT_BRANCH
 
-            # Path to the file containing the list of SHAs
+            # Add file containing the list of SHAs
             git log main..$CURRENT_BRANCH --pretty=format:"%H" > shas.txt
             echo "Added all commits from ${CURRENT_BRANCH} into file sha.txt"
             SHAS_FILE=shas.txt
@@ -127,7 +127,7 @@ jobs:
             else
                 echo "File is not empty: $(<shas.txt)"
             fi
-            
+            exit 1
             # Iterate through each gith shar in the file
             while IFS= read -r sha
             do
@@ -158,11 +158,13 @@ workflows:
           filters:
             branches:
               only:
-                - /^(webg|WEBG)(?!.*-v\d+$).*/
+                # - /^(webg|WEBG)(?!.*-v\d+$).*/
+                - /^(?i)(webg).*((?<!-v\d)$)/
       - copy-to-v5-branch:
           requires:
             - create-v5-v6-branch
           filters:
             branches:
               only:
-                - /^(webg|WEBG)(?!.*-v\d+$).*/
+                # - /^(webg|WEBG)(?!.*-v\d+$).*/
+                - /^(?i)(webg).*((?<!-v\d)$)/
