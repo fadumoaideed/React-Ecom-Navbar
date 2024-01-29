@@ -58,19 +58,24 @@ jobs:
             function create_or_checkout_branch {
             local BRANCH_NAME=$1
 
-            # Check if the branch already exists using git branch and grep
-            if git branch --list $BRANCH_NAME | grep -q $BRANCH_NAME; then
-                # Branch exists
-                echo "Branch $BRANCH_NAME already exists, checking out to $CURRENT_BRANCH."
-            else
-                # Branch does not exist, create and checkout
-                git checkout -b $BRANCH_NAME
-                echo "Branch $BRANCH_NAME created and checked out."
-                git push origin $BRANCH_NAME
-                echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
+            # Check if the branch already exists
+            # If remote doesnt exist exist with status code 2 redirects standard output (stdout) to /dev/null, which discards it.
+            
+            git ls-remote --exit-code --heads origin $BRANCH_NAME >/dev/null 2>&1
+            # Assign response to var
+            EXIT_CODE=$?
 
+            if [[ $EXIT_CODE == '0' ]]; then
+              echo "Git branch '$BRANCH_NAME' exists in the remote repository"
+              echo "Checking out to $CURRENT_BRANCH."
+            elif [[ $EXIT_CODE == '2' ]]; then
+              echo "Git branch '$BRANCH_NAME' does not exist in the remote repository"
+              # Branch does not exist, create and checkout
+              git checkout -b $BRANCH_NAME
+              echo "Branch $BRANCH_NAME created and checked out."
+              git push origin $BRANCH_NAME
+              echo "Branch $BRANCH_NAME pushed to remote, checking out to $CURRENT_BRANCH."
             fi
-            }
 
             echo "Create and push -v5 branch"
             echo "Checkout to v5 branch"
@@ -82,7 +87,9 @@ jobs:
             echo "Create and push -v6 branch"
             echo "Checkout to v6 branch"
             git checkout v6
-            create_or_checkout_branch "${CURRENT_BRANCH}-v6"     
+            create_or_checkout_branch "${CURRENT_BRANCH}-v6"   
+            git checkout $CURRENT_BRANCH
+  
       - persist_to_workspace:
           # Persist the previous steps to the workspace.
           root: ~/repo
@@ -141,6 +148,7 @@ jobs:
                     git cherry-pick --abort
                     exit 1
                 fi
+                git push
             done < "$SHAS_FILE"
 
             echo "All SHAs have been cherry-picked successfully."
